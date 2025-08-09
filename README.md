@@ -1,6 +1,6 @@
 # Application de Gestion d'Événements et de Billets
 
-Cette application est construite avec la stack MEVN (MongoDB, Express.js, Vue.js, Node.js) et permet la gestion d'événements et de billets avec une interface moderne et interactive.
+Cette application est construite avec la stack MERN (MongoDB, Express.js, React.js, Node.js) et permet la gestion d'événements et de billets avec une interface moderne et interactive.
 
 ## Prérequis
 
@@ -13,7 +13,7 @@ Cette application est construite avec la stack MEVN (MongoDB, Express.js, Vue.js
 ```
 mevn_dock/
 ├── backend/         # Serveur Express.js
-├── frontend/       # Application Vue.js
+├── frontend/       # Application React.js
 ```
 
 ## Installation
@@ -99,7 +99,7 @@ node seed.js
 - bcrypt pour le hachage des mots de passe
 
 ### Frontend
-- Vue.js 3
+- React.js
 - Vite
 - Tailwind CSS
 - Framer Motion pour les animations
