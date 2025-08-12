@@ -1,8 +1,10 @@
 import express from 'express';
 import mongoose from 'mongoose';
 import cors from 'cors';
+
 import Event from './models/Event.js';
 import Ticket from './models/Ticket.js';
+import User from './models/User.js';
 import authRoutes from './routes/auth.js';
 import ticketRoutes from './routes/tickets.js';
 import eventRoutes from './routes/events.js';
@@ -13,30 +15,30 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// Routes
+// Routes principales
 app.use('/api/auth', authRoutes);
 app.use('/api/tickets', ticketRoutes);
 app.use('/api/events', eventRoutes);
 
-// MongoDB Connection
-// MongoDB Connection avec retry
+// Connexion MongoDB avec retry
 const connectDB = async () => {
   try {
-    await mongoose.connect('mongodb://localhost:27017/billetterie', {
+    await mongoose.connect('mongodb://mongo:27017/billetterie', {
       useNewUrlParser: true,
       useUnifiedTopology: true,
     });
     console.log('✅ Connected to MongoDB');
   } catch (err) {
     console.error('❌ MongoDB connection error:', err);
-    // Attendre 5 secondes avant de réessayer
     setTimeout(connectDB, 5000);
   }
 };
 
 connectDB();
 
-// Routes
+/* ================================
+   ROUTES UTILISATEURS
+================================ */
 app.get('/api/users', async (req, res) => {
   try {
     const users = await User.find().select('-password');
@@ -86,9 +88,9 @@ app.delete('/api/users/:id', async (req, res) => {
   }
 });
 
-// Server
-const PORT = 5000;
-// Routes pour les événements
+/* ================================
+   ROUTES EVENEMENTS
+================================ */
 app.get('/api/events', async (req, res) => {
   try {
     const events = await Event.find();
@@ -119,38 +121,34 @@ app.get('/api/events/:id', async (req, res) => {
   }
 });
 
-// Routes pour les tickets
+/* ================================
+   ROUTES TICKETS
+================================ */
 app.post('/api/tickets', async (req, res) => {
   try {
     const { eventId, userId, quantity } = req.body;
-    
-    // Vérifier la disponibilité des tickets
+
     const event = await Event.findById(eventId);
     if (!event) {
       return res.status(404).json({ message: 'Événement non trouvé' });
     }
-    
+
     if (event.availableTickets < quantity) {
       return res.status(400).json({ message: 'Pas assez de tickets disponibles' });
     }
-    
-    // Créer le ticket
+
     const ticket = new Ticket({
       eventId,
       userId,
       quantity,
       totalPrice: event.price * quantity,
-      status: 'reserved'
+      status: 'reserved',
     });
-    
-    // Mettre à jour le nombre de tickets disponibles
+
     event.availableTickets -= quantity;
-    
-    await Promise.all([
-      ticket.save(),
-      event.save()
-    ]);
-    
+
+    await Promise.all([ticket.save(), event.save()]);
+
     res.status(201).json(ticket);
   } catch (error) {
     res.status(400).json({ message: error.message });
@@ -168,25 +166,25 @@ app.get('/api/tickets/user/:userId', async (req, res) => {
   }
 });
 
-// Route pour mettre à jour le statut d'un ticket
 app.patch('/api/tickets/:id/status', async (req, res) => {
   try {
     const { status } = req.body;
     const ticket = await Ticket.findById(req.params.id);
-    
     if (!ticket) {
       return res.status(404).json({ message: 'Ticket non trouvé' });
     }
-    
     ticket.status = status;
     await ticket.save();
-    
     res.json(ticket);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
 });
 
-app.listen(5000, () => {
-  console.log(`Server running on http://localhost:5000`);
+/* ================================
+   DEMARRAGE DU SERVEUR
+================================ */
+const PORT = process.env.PORT || 5000;
+app.listen(PORT, '0.0.0.0', () => {
+  console.log(`🚀 Server running on http://0.0.0.0:${PORT}`);
 });
